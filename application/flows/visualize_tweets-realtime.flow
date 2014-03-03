@@ -1,0 +1,160 @@
+# Project: adams
+# Date: 2014-02-12 15:20:23
+# User: fracpete
+#
+adams.flow.control.Flow
+	-annotation
+	Example flow that replays tweets and displays \nthe ones with geo location data on a world map\nin two layers: happy and sad.\nMaximum of timespan (i.e., creation timestamp) \nbetween tweets on map is 2min.
+	-actor
+		adams.flow.standalone.TwitterConnection
+	-actor
+		adams.flow.standalone.CallableActors
+			-actor
+				adams.flow.control.Sequence
+					-name
+					TweetMap
+					-actor
+						adams.flow.transformer.TwitterConverter
+							-converter
+								adams.data.twitter.SpreadSheetConverter
+									-field
+									GEO_LATITUDE
+									-field
+									GEO_LONGITUDE
+									-field
+									TEXT
+									-field
+									CREATED
+									-spreadsheet-type
+										adams.data.spreadsheet.SpreadSheet
+					-actor
+						adams.flow.transformer.Convert
+							-name
+							join long/lat
+							-conversion
+								adams.data.conversion.SpreadSheetJoinColumns
+									-columns
+									1,2
+									-glue
+									 
+					-actor
+						adams.flow.transformer.Convert
+							-name
+							gps
+							-conversion
+								adams.data.conversion.SpreadSheetStringColumnToObject
+									-no-copy
+									true
+									-handler
+										adams.data.spreadsheet.GPSDecimalDegrees
+					-actor
+						adams.flow.transformer.Convert
+							-name
+							map objects
+							-conversion
+								adams.data.conversion.SpreadSheetToMapObjects
+									-generator
+										adams.data.conversion.mapobject.SimpleDotMarkerGenerator
+											-layer
+											@{layer}
+											-gps
+											1
+											-additional-attributes
+											2-last
+											-dot-color
+											@{color}
+					-actor
+						adams.flow.sink.OpenStreetMapViewer
+							-name
+							TweetMap
+							-writer
+								adams.gui.print.NullWriter
+							-tile-source
+								adams.flow.sink.openstreetmapviewer.OpenStreetMapSource
+							-tile-loader
+								adams.flow.sink.openstreetmapviewer.OpenStreetMapCachedLoader
+							-hit-listener
+								adams.flow.sink.openstreetmapviewer.SimpleMapObjectHitListener
+							-mapobject-pruner
+								adams.flow.sink.openstreetmapviewer.MaxAgePruner
+									-max-age
+									START -2 MINUTE
+							-map-overlay
+								adams.flow.sink.openstreetmapviewer.NullMapOverlay
+							-initial-zoom
+							1
+							-layer-tree
+							true
+							-layer
+							Tweets
+							-layer
+							Tweets.happy
+							-layer
+							Tweets.sad
+	-actor
+		adams.flow.source.TwitterListener
+			-max-updates
+			0
+	-actor
+		adams.flow.transformer.TwitterFilter
+			-expression
+			has(latitude) and has(longitude)
+	-actor
+		adams.flow.control.ConditionalTee
+			-name
+			happy
+			-tee
+				adams.flow.transformer.SetVariable
+					-name
+					layer name
+					-var-name
+					layer
+					-var-value
+					Tweets.happy
+			-tee
+				adams.flow.transformer.SetVariable
+					-name
+					color
+					-var-name
+					color
+					-var-value
+					#00ff00
+			-tee
+				adams.flow.sink.CallableSink
+					-callable
+					TweetMap
+			-condition
+				adams.flow.condition.bool.TwitterFilterExpression
+					-expression
+					text:"😊" or text:"😂"
+	-actor
+		adams.flow.control.ConditionalTee
+			-name
+			sad
+			-tee
+				adams.flow.transformer.SetVariable
+					-name
+					layer name
+					-var-name
+					layer
+					-var-value
+					Tweets.sad
+			-tee
+				adams.flow.transformer.SetVariable
+					-name
+					color
+					-var-name
+					color
+					-var-value
+					#ff0000
+			-tee
+				adams.flow.sink.CallableSink
+					-callable
+					TweetMap
+			-condition
+				adams.flow.condition.bool.TwitterFilterExpression
+					-expression
+					text:"😫" or text:"😭"
+	-flow-execution-listener
+		adams.flow.execution.NullListener
+

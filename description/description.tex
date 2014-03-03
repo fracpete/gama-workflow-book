@@ -1,0 +1,36 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+
+\newcommand{\icon}[1]{\tikz[baseline=-3pt] \node[inner sep=0pt,outer sep=0pt]{\includegraphics[height=1.1em]{images/#1}};}
+
+%opening
+\title{ADAMS - Scientific Workflow Management}
+\author{Peter Reutemann}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+TODO
+\end{abstract}
+
+\section{Description}
+TODO
+
+\begin{itemize}
+  \item Java-based modular framework (uses Maven)
+  \item data-driven workflow
+  \item operators are called actors
+  \item uses tree structure to organize actors, to explicit connecting of actors
+  \item control actors ``control'' the data flow (eg Tee, Branch)
+  \item modules: Weka, MOA, R, image processing (ImageJ, JAI, ImageMagick, Gnuplot), PDF, spreadsheet (CSV, Gnumeric, Excel, ODF), scripting (Groovy, Jython), GIS (OpenStreetMap), Twitter, time-series, webservice, heatmap
+  \item three different views of actors: functional (primitive or actor handler), procedural (standalone, source, transformer, sink), flow control (sequence, branch, sub-process, tee, trigger, ...)
+  \item cons: 1-to-n due to tree; tree-layout less intuitive
+  \item pros: compact layout, scales to 1000s of actors, context-aware adding of actors, suggestion rules for actors, interactive actors
+  \item 1-to-n limitation: callable actors (n-to-1), multiple outputs in containers (n-to-1), variables, internal storage (re-use of data in multiple locations)
+\end{itemize}
+
+
+\end{document}
