@@ -96,7 +96,7 @@ adams.flow.control.Flow
 			-replay
 				adams.data.io.input.SpreadSheetConverterArchive
 					-archive
-					${HOME}/documents/books/adams/gama-workflows/application/flows/data/adams-archive.csv
+					${HOME}/documents/books/adams/gama-workflow-book/application/flows/data/adams-archive.csv
 	-actor
 		adams.flow.transformer.TwitterFilter
 			-expression
