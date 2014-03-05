@@ -33,4 +33,4 @@
 *~
 *.swp
 *.pdf
-*.kate-swp
+.*.kate-swp
