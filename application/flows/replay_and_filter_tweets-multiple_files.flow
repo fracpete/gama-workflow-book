@@ -1,0 +1,46 @@
+# Project: adams
+# Date: 2014-03-06 15:38:31
+# User: fracpete
+#
+adams.flow.control.Flow
+	-annotation
+	Demonstrates how to replay archived tweets (generated with ADAMS)\nfrom multiple archives.\nUseful when experimenting with algorithms processing \ntweets and require the same tweet stream each time.
+	-actor
+		adams.flow.source.DirectoryLister
+			-dir
+			${HOME}/documents/books/gama-workflow-book/application/flows/data
+			-list-files
+			true
+			-regexp
+			.*.csv
+			-sorting
+			SORT_BY_NAME
+	-actor
+		adams.flow.transformer.SetVariable
+			-var-name
+			file
+	-actor
+		adams.flow.control.Trigger
+			-name
+			replay file
+			-tee
+				adams.flow.source.TweetReplay
+					-replay
+						adams.data.io.input.SpreadSheetConverterArchive
+							-archive
+							@{file}
+			-tee
+				adams.flow.transformer.TwitterFilter
+					-expression
+					text:"😊" or text:"😂" or text:"😫" or text:"😭"
+			-tee
+				adams.flow.transformer.TwitterConverter
+					-converter
+						adams.data.twitter.TextConverter
+							-separator
+							\t
+			-tee
+				adams.flow.sink.Display
+	-flow-execution-listener
+		adams.flow.execution.NullListener
+
