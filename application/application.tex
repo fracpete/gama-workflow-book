@@ -14,8 +14,11 @@
 \chapter{Twitter Research}
 ADAMS offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and how to perform various analyses.
 
+%%%%%%%%%%%%%%%%%
+% Twitter setup %
+%%%%%%%%%%%%%%%%%
 \section{Twitter setup}
-ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for accessing twitter. In order to access some of the functionality of the Twitter API, you need to have a developer account and register an application with API key/secret and Access token/secret. You can register an application on the Twitter Developer website\footnote{\url{https://dev.twitter.com/}{}}. Figure \ref{twitter_dev} shows an example website for an ADAMS application, complete with generated API key/secret and Access token/secret. Once you have obtained these keys/tokens/secrets you can enter these in the ADAMS preferences for Twitter, as shown in Figure \ref{twitter_preferences}. These preferences are global and get picked up by the \icon{TwitterConnection}~TwitterConnection actor as default values, which you can always override, in case you need different credentials.
+ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for accessing Twitter. In order to access some of the functionality of the Twitter API, you need to have a developer account and register an application to get the required API key/secret and Access token/secret. You can register an application on the Twitter Developer website\footnote{\url{https://dev.twitter.com/}{}} for free. Figure \ref{twitter_dev} shows an example website for an ADAMS application, complete with generated API key/secret and Access token/secret. Once you have obtained these keys/tokens/secrets you can enter them in the ADAMS preferences page for Twitter, as shown in Figure \ref{twitter_preferences}. These preferences are global and get picked up by the \icon{TwitterConnection}~TwitterConnection actor as default values, which you can always override, in case you need different credentials.
 
 \begin{figure}[htb]
   \centering
@@ -31,6 +34,9 @@ ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for acc
   \label{twitter_preferences}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%
+% Collecting tweets %
+%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \newpage
 \section{Collecting tweets}
@@ -44,7 +50,7 @@ In order to collect tweets, you basically only need the following three actors:
   \item \icon{TwitterListener}~\textbf{TwitterListener} -- for accessing the ``garden hose'' stream of tweets.
   \item \icon{TwitterConverter}~\textbf{TwitterConverter} -- for turning the tweets into a data format suitable for future analysis, e.g., spreadsheet format.
 \end{itemize}
-Unless you are storing the data in a database, the generated tweet archive file will get rather large, since there are several million tweets coming through the ``garden hose'' every single day. The flow depicted in Figure \ref{collect_tweets-flow} saves the tweets in a special ADAMS CSV (comma-separated values) file format, which can be used for replaying the tweets again. In order to avoid too large an output file, the tweets get grouped by day. 
+Unless you are storing the data in a database, the generated tweet archive file will get rather large, since there are several million tweets coming through the ``garden hose'' every single day. The flow depicted in Figure \ref{collect_tweets-flow} saves the tweets in a special ADAMS CSV (comma-separated values) file format, which is also the recommended format for replaying the tweets. In order to avoid too large an output file, the tweets get grouped by day. 
 
 The flow works as follows:
 \begin{itemize}
@@ -72,10 +78,25 @@ The flow works as follows:
   \label{collect_tweets-flow}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Replaying and filtering tweets %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \newpage
 \section{Replaying and filtering tweets}
-TODO
+Once you have collected a sufficiently large archive of tweets, you can start experimenting with them. As a first step, we want to demonstrate how you can replay existing archives and how to filter tweets according to user-specified criteria.
+
+Figure \ref{replay_and_filter_tweets-flow} shows a flow that performs some basic filtering of replayed tweets:
+
+\begin{itemize}
+  \item The \icon{TweetReplay}~TweetReplay source replays tweets using the specified tweet replay mechanism, in this case an ADAMS CSV archive.
+  
+  \item In this case, we want to look into sentiment analysis and therefore only allow tweets that contain a ``happy'' or a ``sad'' smiley icon. This is done using the \icon{TwitterFilter}~TwitterFilter transformer, which allows you to specify a filter expression. You have access to, if present, the status text, user, language, country, place, ``mentions'', hashtags and GPS location.
+  
+  \item The \icon{TwitterConverter}~TwitterConverter transformer is used to turn the tweet objects into a textual representation, simply using the status text.
+  
+  \item The generated text output is then visualized in a simple text viewer, the \icon{Display}~Display sink.
+\end{itemize}
 
 \begin{figure}[htb]
   \centering
@@ -84,12 +105,24 @@ TODO
   \label{replay_and_filter_tweets-flow}
 \end{figure}
 
+However, if you generated more than one CSV archive, you don't want to manually change the flow each time you want to process another archive file. Using the variable mechanism in ADAMS, you can easily automate the traversal of all the CSV archive files in a directory. Figure \ref{replay_and_filter_tweets-multiple_files-flow} shows how this is done:
+
+\begin{itemize}
+  \item With the \icon{DirectoryLister}~DirectoryLister source, you can search directories using a regular expression and output files and/or directories. In our case, we want to output all CSV files (``\texttt{.*\textbackslash.csv}'').
+  
+  \item The \icon{SetVariable}~SetVariable transformer stores the file names that the \icon{DirectoryLister}~DirectoryLister outputs in the variable \texttt{@\{file\}}.
+  
+  \item The \icon{Trigger}~Trigger control actor encapsulates now the flow that was introduced in Figure \ref{replay_and_filter_tweets-flow}. However, the ``archive'' option of the SpreadSheetConverterArchive tweet replay mechanism now has the variable \texttt{@\{file\}} attached to it, rather than a fixed file name. This way we will replay one CSV file after the other.
+\end{itemize}
+
 \begin{figure}[htb]
   \centering
   \includegraphics[width=12.0cm]{images/replay_and_filter_tweets-multiple_files-flow.png}
   \caption{Flow for replaying and filtering tweets from multiple CSV archives, using simple textual output.}
   \label{replay_and_filter_tweets-multiple_files-flow}
 \end{figure}
+
+Now, simply outputting the status texts of the filtered tweets is not overly interesting, we want to answer some questions with the data. For instance, how does the distribution of ``happy'' and ``sad'' smileys change over time?
 
 \begin{figure}[htb]
   \centering
@@ -112,11 +145,17 @@ TODO
   \label{twitter_mood}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%
+% Visualizing tweets %
+%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \newpage
 \section{Visualizing tweets}
 TODO
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Visualizing tweets - Analysis %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Analysis}
 TODO
 
@@ -134,6 +173,9 @@ TODO
   \label{visualize_tweets-archive-output}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Visualizing tweets - Real-time visualization %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Real-time visualization}
 TODO
 
