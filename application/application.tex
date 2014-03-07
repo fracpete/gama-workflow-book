@@ -86,6 +86,7 @@ The flow works as follows:
 \section{Replaying and filtering tweets}
 Once you have collected a sufficiently large archive of tweets, you can start experimenting with them. As a first step, we want to demonstrate how you can replay existing archives and how to filter tweets according to user-specified criteria.
 
+\subsection{Basic replay and filtering}
 Figure \ref{replay_and_filter_tweets-flow} shows a flow that performs some basic filtering of replayed tweets:
 
 \begin{itemize}
@@ -122,11 +123,42 @@ However, if you generated more than one CSV archive, you don't want to manually 
   \label{replay_and_filter_tweets-multiple_files-flow}
 \end{figure}
 
+\subsection{Plotting calculated values}
 Now, simply outputting the status texts of the filtered tweets is not overly interesting, we want to answer some questions with the data that we have collected. For instance, how does the distribution of ``happy'' and ``sad'' smileys change over time?
 
-In order to keep track of the number of tweets in either category, we will use variables to store the counts. For visualizing, we will use a plotter actor that displays the two curves.
+In order to keep track of the number of tweets in either category, we will use variables to store the counts (per minute in this example). For visualizing, we will use a plotter actor that displays the two curves.
 
-TODO
+The flow works as follows:
+\begin{itemize}
+  \item Initialize the \texttt{@\{timetamp\}} variable with an empty string using the \icon{SetVariable-Standalone}~SetVariable standalone.
+
+  \item The \icon{TweetReplay}~TweetReplay source replays a previously generated tweet archive.
+
+  \item In the \icon{Trigger}~Trigger ``determine timestamp'' we determine the timestamp of the current tweet and, if it changed, plot the current counts of happy/sad smileys.
+  \begin{itemize}
+    \item The \icon{TwitterConverter}~TwitterConverter outputs a ``per minute'' timestamp for the \texttt{CREATED} tweet field.
+    \item If \icon{ConditionalTee} ``timestamp changed?'' determines that the new timestamp differs from the old one, we do the following:
+    \begin{itemize}
+      \item If the \texttt{@\{timestamp\}} variable is not empty, i.e., we have counts for the previous minute available and we want to plot them. This gets determined by the \icon{ConditionalTrigger}~ConditionalTrigger ``plot?''. The actual plotting is explained below.
+      \item Record the new timestamp as the current one, using the \icon{SetVariable}~SetVariable actor.
+    \end{itemize}
+  \end{itemize}
+  
+  \item The \icon{ConditionalTrigger}~ConditionalTrigger ``happy'' evaluates to true if the twitter text contains a happy smiley and accordingly increments the ``happy'' counter variable using \icon{IncVariable}~IncVariable.
+  
+  \item The \icon{ConditionalTrigger}~ConditionalTrigger ``sad'' works like the ``happy'' one.
+\end{itemize}
+The \icon{SequencePlotter}~SequencePlotter sink accepts special ``plot'' containers, which we can generate using the \icon{MakePlotContainer}~MakePlotContainer transformer. This transformer accepts either a single double (``y'') or a double array of length two (``x'' and ``y''). We will generate these plot containers using the timestamp and counts stored in variables, converting them to doubles in the process. Therefore the plotting of the happy/sad counts works as follows (sub-flow beneath the \icon{ConditionalTrigger}~ConditionalTrigger ``plot?''):
+\begin{itemize}
+  \item In the \icon{Trigger}~Trigger ``timestamp to double'' we are converting the previous ``minute'' timestamp string into milli-seconds (Java epoch) using the \icon{Convert}~Convert transformer in conjunction with the StringToDateTimeType conversion and store the result in the \texttt{@\{timestamp\_double\}} variable.
+  
+  \item The ``plot happy'' \icon{Trigger}~Trigger then outputs the \texttt{@\{timestamp\_double\}} and \texttt{@\{happy\}} variables as string array, converts it to a double array using the \icon{ArrayProcess}~ArrayProcess control actor with the nested \icon{Convert}~Convert actor (using the StringToDouble conversion), creates a plot container using the \icon{MakePlotContainer}~MakePlotContainer transformer (labeled ``happy'') and feeds it into the call-able \icon{SequencePlotter}~SequencePlotter sink using the \icon{CallableSink}~CallableSink actor.
+  
+  \item The ``plot sad'' sub-flow works similar.
+  
+  \item The \icon{SetVariable}~SetVariable transformers ``reset happy'' and ``reset sad'' reset the counters to 0 for the next minute.
+\end{itemize}
+Figure \ref{replay_and_filter_tweets2-output} shows the generated plot from a small tweet archive that spans only a few minutes. Apart from the fact that people seem to post more ``happy'' smileys, not much else can be gleaned from this plot. However, when we aggregate the counts over hours rather than minutes, it is possible to trends much better. Figure \ref{twitter_mood} shows the smiley distribution over New Years 2013/14\footnote{In the early hours of the new year, a network outage prohibited the collection of tweets. However, the general trend is not much affected by that.}. You can clearly see that the ``sad'' smileys follow closely the ``happy'' ones, though at a reduced rate. But around the changeover of years, the counts for the ``happy'' smileys skyrocket before settling back to a more normal behavior. The smaller bump later in the day on New Years is probably due to people getting up and replying to tweets that they received the night before.
 
 \begin{figure}[htb]
   \centering
@@ -144,7 +176,7 @@ TODO
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=10.0cm]{images/twitter_mood.png}
+  \includegraphics[width=12.0cm]{images/twitter_mood.png}
   \caption{Visualization of mood distribution per hour over New Years 2013/2014 (``happy'' and ``sad'' smiley counts).}
   \label{twitter_mood}
 \end{figure}
