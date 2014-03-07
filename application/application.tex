@@ -12,7 +12,7 @@
 \begin{document}
 
 \chapter{Twitter Research}
-ADAMS offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and how to perform various analyses.
+ADAMS offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and use geolocation information.
 
 %%%%%%%%%%%%%%%%%
 % Twitter setup %
@@ -158,7 +158,9 @@ The \icon{SequencePlotter}~SequencePlotter sink accepts special ``plot'' contain
   
   \item The \icon{SetVariable}~SetVariable transformers ``reset happy'' and ``reset sad'' reset the counters to 0 for the next minute.
 \end{itemize}
-Figure \ref{replay_and_filter_tweets2-output} shows the generated plot from a small tweet archive that spans only a few minutes. Apart from the fact that people seem to post more ``happy'' smileys, not much else can be gleaned from this plot. However, when we aggregate the counts over hours rather than minutes, it is possible to trends much better. Figure \ref{twitter_mood} shows the smiley distribution over New Years 2013/14\footnote{In the early hours of the new year, a network outage prohibited the collection of tweets. However, the general trend is not much affected by that.}. You can clearly see that the ``sad'' smileys follow closely the ``happy'' ones, though at a reduced rate. But around the changeover of years, the counts for the ``happy'' smileys skyrocket before settling back to a more normal behavior. The smaller bump later in the day on New Years is probably due to people getting up and replying to tweets that they received the night before.
+Figure \ref{replay_and_filter_tweets2-output} shows the generated plot from a small tweet archive that spans only a few minutes. Apart from the fact that people seem to post more ``happy'' smileys, not much else can be gleaned from this plot.
+
+However, when we aggregate the counts over hours rather than minutes, it is possible to see trends much better. Figure \ref{twitter_mood} shows the smiley distribution over New Years 2013/14\footnote{In the early hours of the new year, a network outage prohibited the collection of tweets.}. You can clearly see that the ``sad'' smileys follow closely the ``happy'' ones, though at a reduced rate. But around the changeover of years, the counts for the ``happy'' smileys skyrocket before settling back to a more normal level. The second, smaller ``happy'' bump later in the day on New Years Day is probably due to people getting up and replying to tweets that they received the night before.
 
 \begin{figure}[htb]
   \centering
@@ -181,44 +183,32 @@ Figure \ref{replay_and_filter_tweets2-output} shows the generated plot from a sm
   \label{twitter_mood}
 \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%
-% Visualizing tweets %
-%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%
+% Geolocation %
+%%%%%%%%%%%%%%%
 \clearpage
 \newpage
-\section{Visualizing tweets}
-TODO
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Visualizing tweets - Analysis %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Analysis}
-TODO
+\section{Geolocation}
+Twitter enables users to attach their geolocation\footnote{WikiPedia on geolocation: \url{https://en.wikipedia.org/wiki/Geolocation}{}} in the form of GPS coordinates to the tweets that they are sending. In the previous section, we discovered how to analyze tweets along the time axis. Using the geolocation information of tweets in conjunction with the OpenStreetMap\footnote{\url{http://www.openstreetmap.org/}{}} support available in ADAMS, we can visualize tweets on a map over time. The visualization can either be generated from a tweet archive (see Figure \ref{visualize_tweets-archive-flow}) or in real-time (see Figure \ref{visualize_tweets-realtime-flow}), by listening to the tweets as they occur. The archive approach is much faster, as ADAMS can usually process tweets faster than they become available through Twitter's ``garden hose''.
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=12.0cm]{images/visualize_tweets-archive-flow.png}
-  \caption{Flow for visualizing tweets archive.}
+  \caption{Flow for visualizing tweets with geolocation information.}
   \label{visualize_tweets-archive-flow}
 \end{figure}
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=10.0cm]{images/visualize_tweets-archive-output.png}
-  \caption{Flow for visualizing tweets archive.}
+  \caption{Visualization of tweets with geolocation information.}
   \label{visualize_tweets-archive-output}
 \end{figure}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Visualizing tweets - Real-time visualization %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Real-time visualization}
-TODO
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=12.0cm]{images/visualize_tweets-realtime-flow.png}
-  \caption{Flow for visualizing tweets in real-time.}
+  \caption{Flow for visualizing geolocation tweets in real-time.}
   \label{visualize_tweets-realtime-flow}
 \end{figure}
 
