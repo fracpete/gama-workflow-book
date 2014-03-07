@@ -191,6 +191,31 @@ However, when we aggregate the counts over hours rather than minutes, it is poss
 \section{Geolocation}
 Twitter enables users to attach their geolocation\footnote{WikiPedia on geolocation: \url{https://en.wikipedia.org/wiki/Geolocation}{}} in the form of GPS coordinates to the tweets that they are sending. In the previous section, we discovered how to analyze tweets along the time axis. Using the geolocation information of tweets in conjunction with the OpenStreetMap\footnote{\url{http://www.openstreetmap.org/}{}} support available in ADAMS, we can visualize tweets on a map over time. The visualization can either be generated from a tweet archive (see Figure \ref{visualize_tweets-archive-flow}) or in real-time (see Figure \ref{visualize_tweets-realtime-flow}), by listening to the tweets as they occur. The archive approach is much faster, as ADAMS can usually process tweets faster than they become available through Twitter's ``garden hose''.
 
+The spreadsheet data structure in ADAMS allows you not only to represent primitives such as boolean, long, double, string and various date types, you can also store arbitrary objects. These objects get converted to and from strings using handlers that are registered for specific object types. GPS coordinates conversion is one application of this generic functionality. Displaying geolocation data therefore first converts the GPS coordinates obtained from the tweets into GPS objects before generating special map objects to be displayed on the map itself.
+
+The flow for displaying the geolocation tweets is relatively simple:
+\begin{itemize}
+  \item The tweets get generated once again using the \icon{TweetReplay}~TweetReplay source.
+  
+  \item Since we require geolocation information, we filter the tweets with a \icon{TwitterFilter}~TwitterFilter transformer, that ensures that latitude and longitude values are present.
+  
+  \item A \icon{ConditionalTee}~ConditionalTee with a TwitterFilterExpression is used to check for ``happy'' tweets. In case of such a tweet, a ``layer'' name for the map and the associated ``color'' of the marker on the map are set using \icon{SetVariable}~SetVariable actors. The tweet is then sent off to be plotted on the map using the \icon{CallableSink}~CallableSink actor, referencing the \icon{Sequence}~Sequence actor ``TweetMap''. This control actor encapsulates the following steps:
+  \begin{itemize}
+    \item In order to have a notion of the time passing when the tweet archive is processed, the \icon{OpenStreetMapViewer}~OpenStreetMapViewer sink ability to displayed overlays on the map can be used to display the current value of a variable. Therefore we set the variable \texttt{@\{timestamp\}} with the timestamp generated from the \texttt{CREATED} field of the tweet inside the \icon{Tee}~Tee actor ``create timestamp for overlay'' and use this variable in the overlay ``TextMapOverlay'' of the map set up.
+    
+    \item Before we can convert the GPS coordinates into objects, we need to combine the two column in the generated tweet spreadsheet into a single one using the SpreadSheetJoinColumns conversion in the \icon{Convert}~Convert transformer ``join long/lat''.
+    
+    \item The newly created GPS column can then be turned into GPS objects using the SpreadSheetStringColumnToObject conversion, \icon{Convert}~``gps'', with the handler for processing GPS coordinates.
+    
+    \item The final conversion, \icon{Convert}~``map objects'', then turns the GPS objects into marker objects suitable for the map (SpreadSheetToMapObjects).
+    
+    \item The map objects get channeled into the \icon{OpenStreetMapViewer} map sink itself. Since we do not want to accumulate all the tweets in the map, but rather want to provide a ``mood'' window, we define a pruning strategy in the map. Since our tweet archive covers only a short period, we use a simple pruning strategy that removes all  map objects that are at least two minutes older than the newest map object.
+  \end{itemize}
+
+  \item Processing of ``sad'' smileys works accordingly, but with different layer name and color.
+\end{itemize}
+In Figure \ref{visualize_tweets-archive-output} you can see the final display of tweets from the archive with the timestamp overlay of ``2014-02-12 14:52'' in the top-right corner. ``Happy'' tweets are colored in green and ``sad'' ones in red. Left-clicking with the mouse on one of the map markers brings up the associated information, in this case tweet status text, tweet date and GPS coordinates.
+
 \begin{figure}[htb]
   \centering
   \includegraphics[width=12.0cm]{images/visualize_tweets-archive-flow.png}

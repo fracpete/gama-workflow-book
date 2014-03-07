@@ -1,5 +1,5 @@
 # Project: adams
-# Date: 2014-02-12 15:20:23
+# Date: 2014-03-07 15:00:13
 # User: fracpete
 #
 adams.flow.control.Flow
@@ -13,6 +13,24 @@ adams.flow.control.Flow
 				adams.flow.control.Sequence
 					-name
 					TweetMap
+					-actor
+						adams.flow.control.Tee
+							-name
+							create timestamp for overlay
+							-tee
+								adams.flow.transformer.TwitterConverter
+									-converter
+										adams.data.twitter.TextConverter
+											-field
+											CREATED
+											-separator
+											\t
+											-date-format
+											yyyy-MM-dd HH:mm
+							-tee
+								adams.flow.transformer.SetVariable
+									-var-name
+									timestamp
 					-actor
 						adams.flow.transformer.TwitterConverter
 							-converter
@@ -75,12 +93,20 @@ adams.flow.control.Flow
 								adams.flow.sink.openstreetmapviewer.OpenStreetMapCachedLoader
 							-hit-listener
 								adams.flow.sink.openstreetmapviewer.SimpleMapObjectHitListener
+							-click-listener
+								adams.flow.sink.openstreetmapviewer.NullMapClickListener
 							-mapobject-pruner
 								adams.flow.sink.openstreetmapviewer.MaxAgePruner
 									-max-age
 									START -2 MINUTE
 							-map-overlay
-								adams.flow.sink.openstreetmapviewer.NullMapOverlay
+								adams.flow.sink.openstreetmapviewer.TextMapOverlay
+									-width
+									120
+									-storage-name
+									storage
+									-variable-name
+									timestamp
 							-initial-zoom
 							1
 							-layer-tree
