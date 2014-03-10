@@ -1,0 +1,188 @@
+# Project: adams
+# Date: 2014-03-11 12:12:07
+# User: fracpete
+#
+adams.flow.control.Flow
+	-annotation
+	Converts ADAMS spreadsheet archive CSV files into CSV files that can be read by Weka.\nAlso, for convenience, ARFF files get generated as well.
+	-actor
+		adams.flow.source.SelectFile
+			-stop-if-canceled
+			true
+			-file-chooser-title
+			Select CSV files to convert
+			-extension
+			csv
+	-actor
+		adams.flow.control.Tee
+			-name
+			file names
+			-tee
+				adams.flow.transformer.SetVariable
+					-name
+					input file
+					-var-name
+					input
+			-tee
+				adams.flow.control.Tee
+					-name
+					csv output
+					-tee
+						adams.flow.transformer.Convert
+							-conversion
+								adams.data.conversion.ReplaceFileExtension
+									-extension
+									-weka.csv
+					-tee
+						adams.flow.transformer.SetVariable
+							-name
+							csv output file
+							-var-name
+							output_csv
+			-tee
+				adams.flow.control.Tee
+					-name
+					arff output
+					-tee
+						adams.flow.transformer.Convert
+							-conversion
+								adams.data.conversion.ReplaceFileExtension
+									-extension
+									-weka.arff
+					-tee
+						adams.flow.transformer.SetVariable
+							-name
+							csv output file
+							-var-name
+							output_arff
+	-actor
+		adams.flow.control.Trigger
+			-name
+			convert csv
+			-tee
+				adams.flow.source.TweetReplay
+					-replay
+						adams.data.io.input.SpreadSheetConverterArchive
+							-archive
+							@{input}
+			-tee
+				adams.flow.transformer.TwitterFilter
+					-expression
+					text:"😊" or text:"😂" or text:"😫" or text:"😭"
+			-tee
+				adams.flow.transformer.SetVariable
+					-var-name
+					class
+					-var-value
+					?
+			-tee
+				adams.flow.control.ConditionalTee
+					-name
+					happy
+					-tee
+						adams.flow.transformer.SetVariable
+							-var-name
+							class
+							-var-value
+							happy
+					-condition
+						adams.flow.condition.bool.TwitterFilterExpression
+							-expression
+							text:"😊" or text:"😂"
+			-tee
+				adams.flow.control.ConditionalTee
+					-name
+					sad
+					-tee
+						adams.flow.transformer.SetVariable
+							-var-name
+							class
+							-var-value
+							sad
+					-condition
+						adams.flow.condition.bool.TwitterFilterExpression
+							-expression
+							text:"😫" or text:"😭"
+			-tee
+				adams.flow.transformer.TwitterConverter
+					-converter
+						adams.data.twitter.SpreadSheetConverter
+							-spreadsheet-type
+								adams.data.spreadsheet.SpreadSheet
+			-tee
+				adams.flow.transformer.SpreadSheetInsertColumn
+					-after
+					true
+					-header
+					Mood
+			-tee
+				adams.flow.transformer.SpreadSheetSetCell
+					-no-copy
+					true
+					-row
+					last
+					-col
+					last
+					-value
+					@{class}
+			-tee
+				adams.flow.sink.SpreadSheetFileWriter
+					-output
+					@{output_csv}
+					-writer
+						adams.data.io.output.CsvSpreadSheetWriter
+							-missing
+							?
+							-output-comments
+							false
+							-appending
+							true
+							-quote-char
+							'
+							-escape-special-chars
+							true
+	-actor
+		adams.flow.control.Trigger
+			-name
+			convert to arff
+			-tee
+				adams.flow.source.FileSupplier
+					-file
+					@{output_csv}
+			-tee
+				adams.flow.transformer.WekaFileReader
+					-stop-flow-on-error
+					true
+					-use-custom
+					true
+					-loader
+						weka.core.converters.CSVLoader
+							-S
+							1,2
+							-M
+							?
+							-B
+							100
+							-E
+							'
+							-F
+							,
+			-tee
+				adams.flow.transformer.WekaFilter
+					-filter
+						weka.filters.unsupervised.attribute.StringToNominal
+							-R
+							last
+			-tee
+				adams.flow.sink.WekaFileWriter
+					-output
+					@{output_arff}
+					-saver
+						weka.core.converters.ArffSaver
+							-decimal
+							6
+	-error-handling
+	ACTORS_DECIDE_TO_STOP_ON_ERROR
+	-flow-execution-listener
+		adams.flow.execution.NullListener
+

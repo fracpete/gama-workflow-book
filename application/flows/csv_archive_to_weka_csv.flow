@@ -1,5 +1,5 @@
 # Project: adams
-# Date: 2014-03-10 12:35:35
+# Date: 2014-03-11 12:18:35
 # User: fracpete
 #
 adams.flow.control.Flow
@@ -107,6 +107,8 @@ adams.flow.control.Flow
 						adams.data.io.output.CsvSpreadSheetWriter
 							-missing
 							?
+							-output-comments
+							false
 							-appending
 							true
 							-quote-char
