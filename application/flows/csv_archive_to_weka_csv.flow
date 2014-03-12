@@ -1,10 +1,18 @@
 # Project: adams
-# Date: 2014-03-11 12:18:35
+# Date: 2014-03-13 10:18:38
 # User: fracpete
 #
 adams.flow.control.Flow
 	-annotation
-	Converts ADAMS spreadsheet archive CSV files into CSV files that can be read by Weka.
+	Converts ADAMS spreadsheet archive CSV files into a single CSV file that can be read by Weka.
+	-actor
+		adams.flow.standalone.SetVariable
+			-name
+			csv output file
+			-var-name
+			output_csv
+			-var-value
+			${TMP}/combined.csv
 	-actor
 		adams.flow.source.SelectFile
 			-stop-if-canceled
@@ -19,18 +27,6 @@ adams.flow.control.Flow
 			input file
 			-var-name
 			input
-	-actor
-		adams.flow.transformer.Convert
-			-conversion
-				adams.data.conversion.ReplaceFileExtension
-					-extension
-					-weka.csv
-	-actor
-		adams.flow.transformer.SetVariable
-			-name
-			output file
-			-var-name
-			output
 	-actor
 		adams.flow.control.Trigger
 			-name
@@ -102,7 +98,7 @@ adams.flow.control.Flow
 			-tee
 				adams.flow.sink.SpreadSheetFileWriter
 					-output
-					@{output}
+					@{output_csv}
 					-writer
 						adams.data.io.output.CsvSpreadSheetWriter
 							-missing
@@ -115,6 +111,32 @@ adams.flow.control.Flow
 							'
 							-escape-special-chars
 							true
+	-actor
+		adams.flow.control.Trigger
+			-name
+			output csv filename
+			-tee
+				adams.flow.source.Variable
+					-var-name
+					output_csv
+			-tee
+				adams.flow.transformer.Convert
+					-conversion
+						adams.data.conversion.MultiConversion
+							-conversion
+								adams.data.conversion.StringToFile
+									-placeholderfile
+									true
+							-conversion
+								adams.data.conversion.FileToString
+									-absolute
+									true
+			-tee
+				adams.flow.sink.Display
+					-name
+					CSV file
+					-short-title
+					true
 	-error-handling
 	ACTORS_DECIDE_TO_STOP_ON_ERROR
 	-flow-execution-listener

@@ -3,7 +3,20 @@
 \usepackage{tikz}
 \usepackage{hyperref}
 
+% simple heading
+%   \heading{the text of the heading}
+\newcommand{\heading}[1]{
+  \vspace{0.3cm} \noindent \textbf{#1} \newline
+}
+
+% for inline icons
+%   \icon{icon name without path and extension}
 \newcommand{\icon}[1]{\tikz[baseline=-3pt] \node[inner sep=0pt,outer sep=0pt]{\includegraphics[height=1.1em]{images/#1}};}
+
+% to inline TOC better
+\makeatletter
+\newcommand*{\toccontents}{\@starttoc{toc}}
+\makeatother
 
 %opening
 \title{ADAMS - Scientific Workflow Management}
@@ -12,7 +25,12 @@
 \begin{document}
 
 \chapter{Twitter Research}
-ADAMS offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and use geolocation information.
+
+% remove for final version
+\toccontents
+\vspace{1cm}
+
+ADAMS\cite{adams} offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and use geolocation information.
 
 %%%%%%%%%%%%%%%%%
 % Twitter setup %
@@ -44,6 +62,10 @@ Rather than just obtaining the tweets of a single user, Twitter allows you to ta
 
 According to Twitter's API Rules, you can collect tweets, but you are not allowed to redistribute them.\footnote{See \url{https://twitter.com/apirules}{} for more details.} ADAMS therefore fills the void of publicly available tweet archives, by allowing you to collect a large corpus of tweets yourself. You simply set up a flow for collecting tweets and let it run for a number of days, weeks or even months.
 
+\heading{Task}
+Collect tweets for future research purposes due to lack of public tweet archives.
+
+\heading{Solution}
 In order to collect tweets, you basically only need the following three actors:
 \begin{itemize}
   \item \icon{TwitterConnection}~\textbf{TwitterConnection} -- for connecting to Twitter.
@@ -87,6 +109,11 @@ The flow works as follows:
 Once you have collected a sufficiently large archive of tweets, you can start experimenting with them. As a first step, we want to demonstrate how you can replay existing archives and how to filter tweets according to user-specified criteria.
 
 \subsection{Basic replay and filtering}
+
+\heading{Task}
+Replay tweets from an archive and filter out only ``happy'' and ``sad'' tweets.
+
+\heading{Solution}
 Figure \ref{replay_and_filter_tweets-flow} shows a flow that performs some basic filtering of replayed tweets:
 
 \begin{itemize}
@@ -124,8 +151,13 @@ However, if you generated more than one CSV archive, you don't want to manually 
 \end{figure}
 
 \subsection{Plotting calculated values}
+
 Now, simply outputting the status texts of the filtered tweets is not overly interesting, we want to answer some questions with the data that we have collected. For instance, how does the distribution of ``happy'' and ``sad'' smileys change over time?
 
+\heading{Task}
+Plot the mood, i.e., ``happy'' and ``sad'' counts, over time.
+
+\heading{Solution}
 In order to keep track of the number of tweets in either category, we will use variables to store the counts (per minute in this example). For visualizing, we will use a plotter actor that displays the two curves.
 
 The flow works as follows:
@@ -193,6 +225,10 @@ Twitter enables users to attach their geolocation\footnote{WikiPedia on geolocat
 
 The spreadsheet data structure in ADAMS allows you not only to represent primitives such as boolean, long, double, string and various date types, you can also store arbitrary objects. These objects get converted to and from strings using handlers that are registered for specific object types. GPS coordinates conversion is one application of this generic functionality. Displaying geolocation data therefore first converts the GPS coordinates obtained from the tweets into GPS objects before generating special map objects to be displayed on the map itself.
 
+\heading{Task}
+Display tweets on a map of the world using their geolocation information.
+
+\heading{Solution}
 The flow for displaying the geolocation tweets is relatively simple:
 \begin{itemize}
   \item The tweets get generated once again using the \icon{TweetReplay}~TweetReplay source.
@@ -236,5 +272,110 @@ In Figure \ref{visualize_tweets-archive-output} you can see the final display of
   \caption{Flow for visualizing geolocation tweets in real-time.}
   \label{visualize_tweets-realtime-flow}
 \end{figure}
+
+%%%%%%%%%%%%%%%
+% Text mining %
+%%%%%%%%%%%%%%%
+\clearpage
+\newpage
+\section{Text mining}
+So far we have covered how to collect tweet data and perform some visualizations. In this section you will see how you can apply data mining techniques, i.e., Weka\cite{weka} algorithms, to your data archives.
+
+\subsection{Converting the data}
+Before we can evaluate data mining algorithms on our collected data, we need to convert it into a format that Weka can handle. The simplest approach is to create a combined CSV file in the specific format that Weka is able to load\footnote{Weka escapes quotes with a backslash rather than doubling them up as most office packages do. It also turns tabs, new lines, carriage returns into \textbackslash t, \textbackslash n and \textbackslash r respectively.}.
+
+\heading{Task}
+Combine all data archives into single dataset that Weka can read.
+
+\heading{Solution}
+TODO
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=12.0cm]{images/csv_archive_to_weka_csv-flow.png}
+  \caption{Turning tweets archives into single Weka CSV file.}
+  \label{csv_archive_to_weka_csv-flow}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=10.0cm]{images/csv_archive_to_arff-flow.png}
+  \caption{Turning tweets archives into single Weka ARFF file.}
+  \label{csv_archive_to_arff-flow}
+\end{figure}
+
+\subsection{Evaluating the data}
+
+\heading{Task}
+TODO
+
+\heading{Solution}
+TODO
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=12.0cm]{images/crossvalidate_csv_archive-flow.png}
+  \caption{Cross-validating ``mood'' of tweets archives using J48.}
+  \label{crossvalidate_csv_archive-flow}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+  {\scriptsize
+  \begin{verbatim}
+=== Summary ===
+
+Correctly Classified Instances         611               76.2797 %
+Incorrectly Classified Instances       190               23.7203 %
+Kappa statistic                          0.3153
+Mean absolute error                      0.2733
+Root mean squared error                  0.4042
+Relative absolute error                 67.9764 %
+Root relative squared error             90.1795 %
+Coverage of cases (0.95 level)          98.2522 %
+Mean rel. region size (0.95 level)      76.5918 %
+Total Number of Instances              801     
+
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+  78 145 |   a = sad
+  45 533 |   b = happy
+
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.350    0.078    0.634      0.350    0.451      0.338    ?         ?         sad
+                 0.922    0.650    0.786      0.922    0.849      0.338    ?         ?         happy
+Weighted Avg.    0.763    0.491    0.744      0.763    0.738      0.338    0.000     0.000     
+  \end{verbatim}}
+  \caption{Results of cross-validating ``mood''.}
+  \label{crossvalidate_csv_archive-flow}
+\end{figure}
+
+\begin{thebibliography}{999}
+	% to make the bibliography appear in the TOC
+	\addcontentsline{toc}{chapter}{Bibliography}
+
+	\bibitem{adams}
+		Reutemann, Peter and Vanschoren, Joaquin. 
+		\textit{Scientific Workflow Management with ADAMS} (2012);
+		In Peter A. Flach, Tijl Bie, and Nello Cristianini, editors, 
+		Machine Learning and Knowledge Discovery in Databases, 
+		volume 7524 of Lecture Notes in Computer Science, pages 
+		833-837; Springer Berlin Heidelberg, 2012.
+
+	\bibitem{adamsweb}
+		\textit{ADAMS Homepage} -- The community homepage is available at the following URL: \\
+		\url{https://adams.cms.waikato.ac.nz/}{}
+		
+	\bibitem{weka}
+	    Mark Hall, Eibe Frank, Geoffrey Holmes, Bernhard Pfahringer, Peter 
+	    Reutemann, Ian H. Witten (2009); \textit{The WEKA Data Mining Software: An 
+	    Update}; SIGKDD Explorations, Volume 11, Issue 1. 
+
+\end{thebibliography}
 
 \end{document}

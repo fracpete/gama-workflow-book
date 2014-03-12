@@ -1,10 +1,10 @@
 # Project: adams
-# Date: 2014-03-11 12:21:58
+# Date: 2014-03-13 10:15:08
 # User: fracpete
 #
 adams.flow.control.Flow
 	-annotation
-	Converts ADAMS spreadsheet archive CSV files into CSV files that \ncan be read by Weka and cross-validates J48 on it (happy/sad class labels).
+	Converts ADAMS spreadsheet archive CSV files into a single CSV file that \ncan be read by Weka and cross-validates J48 on it (happy/sad class labels).
 	-actor
 		adams.flow.standalone.CallableActors
 			-actor
@@ -21,6 +21,14 @@ adams.flow.control.Flow
 							-M
 							2
 	-actor
+		adams.flow.standalone.SetVariable
+			-name
+			csv output file
+			-var-name
+			output_csv
+			-var-value
+			${TMP}/combined.csv
+	-actor
 		adams.flow.source.SelectFile
 			-stop-if-canceled
 			true
@@ -29,41 +37,11 @@ adams.flow.control.Flow
 			-extension
 			csv
 	-actor
-		adams.flow.control.Tee
+		adams.flow.transformer.SetVariable
 			-name
-			file names
-			-tee
-				adams.flow.transformer.SetVariable
-					-name
-					input file
-					-var-name
-					input
-			-tee
-				adams.flow.control.Tee
-					-name
-					short filename
-					-tee
-						adams.flow.transformer.BaseName
-					-tee
-						adams.flow.transformer.SetVariable
-							-var-name
-							input_short
-			-tee
-				adams.flow.control.Tee
-					-name
-					csv output
-					-tee
-						adams.flow.transformer.Convert
-							-conversion
-								adams.data.conversion.ReplaceFileExtension
-									-extension
-									-weka.csv
-					-tee
-						adams.flow.transformer.SetVariable
-							-name
-							csv output file
-							-var-name
-							output_csv
+			input file
+			-var-name
+			input
 	-actor
 		adams.flow.control.Trigger
 			-name
@@ -197,9 +175,7 @@ adams.flow.control.Flow
 					-class-details
 					true
 			-tee
-				adams.flow.sink.HistoryDisplay
-					-entry-name-variable
-					input_short
+				adams.flow.sink.Display
 	-error-handling
 	ACTORS_DECIDE_TO_STOP_ON_ERROR
 	-flow-execution-listener
