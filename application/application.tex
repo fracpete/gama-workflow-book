@@ -13,11 +13,6 @@
 %   \icon{icon name without path and extension}
 \newcommand{\icon}[1]{\tikz[baseline=-3pt] \node[inner sep=0pt,outer sep=0pt]{\includegraphics[height=1.1em]{images/#1}};}
 
-% to inline TOC better
-\makeatletter
-\newcommand*{\toccontents}{\@starttoc{toc}}
-\makeatother
-
 %opening
 \title{ADAMS - Scientific Workflow Management}
 \author{Peter Reutemann}
@@ -25,10 +20,6 @@
 \begin{document}
 
 \chapter{Twitter Research}
-
-% remove for final version
-\toccontents
-\vspace{1cm}
 
 ADAMS\cite{adams} offers a large amount of actors for a wide range of data processing and mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets and use geolocation information.
 
@@ -365,7 +356,7 @@ Weighted Avg.    0.763    0.491    0.744      0.763    0.738      0.338    0.000
 		In Peter A. Flach, Tijl Bie, and Nello Cristianini, editors, 
 		Machine Learning and Knowledge Discovery in Databases, 
 		volume 7524 of Lecture Notes in Computer Science, pages 
-		833-837; Springer Berlin Heidelberg, 2012.
+		833-837; Springer Berlin Heidelberg.
 
 	\bibitem{adamsweb}
 		\textit{ADAMS Homepage} -- The community homepage is available at the following URL: \\
