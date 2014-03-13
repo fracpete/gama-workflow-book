@@ -1,5 +1,5 @@
 # Project: adams
-# Date: 2014-03-13 10:14:59
+# Date: 2014-03-13 13:32:34
 # User: fracpete
 #
 adams.flow.control.Flow
@@ -22,105 +22,111 @@ adams.flow.control.Flow
 			-var-value
 			${TMP}/combined.arff
 	-actor
-		adams.flow.source.SelectFile
-			-stop-if-canceled
-			true
-			-file-chooser-title
-			Select CSV files to convert
-			-extension
-			csv
-	-actor
-		adams.flow.transformer.SetVariable
-			-name
-			input file
-			-var-name
-			input
+		adams.flow.source.Start
 	-actor
 		adams.flow.control.Trigger
 			-name
 			convert csv
 			-tee
-				adams.flow.source.TweetReplay
-					-replay
-						adams.data.io.input.SpreadSheetConverterArchive
-							-archive
-							@{input}
-			-tee
-				adams.flow.transformer.TwitterFilter
-					-expression
-					text:"😊" or text:"😂" or text:"😫" or text:"😭"
+				adams.flow.source.SelectFile
+					-stop-if-canceled
+					true
+					-file-chooser-title
+					Select CSV files to convert
+					-extension
+					csv
 			-tee
 				adams.flow.transformer.SetVariable
+					-name
+					input file
 					-var-name
-					class
-					-var-value
-					?
+					input
 			-tee
-				adams.flow.control.ConditionalTee
+				adams.flow.control.Trigger
 					-name
-					happy
+					convert
+					-tee
+						adams.flow.source.TweetReplay
+							-replay
+								adams.data.io.input.SpreadSheetConverterArchive
+									-archive
+									@{input}
+					-tee
+						adams.flow.transformer.TwitterFilter
+							-expression
+							text:"😊" or text:"😂" or text:"😫" or text:"😭"
 					-tee
 						adams.flow.transformer.SetVariable
 							-var-name
 							class
 							-var-value
-							happy
-					-condition
-						adams.flow.condition.bool.TwitterFilterExpression
-							-expression
-							text:"😊" or text:"😂"
-			-tee
-				adams.flow.control.ConditionalTee
-					-name
-					sad
-					-tee
-						adams.flow.transformer.SetVariable
-							-var-name
-							class
-							-var-value
-							sad
-					-condition
-						adams.flow.condition.bool.TwitterFilterExpression
-							-expression
-							text:"😫" or text:"😭"
-			-tee
-				adams.flow.transformer.TwitterConverter
-					-converter
-						adams.data.twitter.SpreadSheetConverter
-							-spreadsheet-type
-								adams.data.spreadsheet.SpreadSheet
-			-tee
-				adams.flow.transformer.SpreadSheetInsertColumn
-					-after
-					true
-					-header
-					Mood
-			-tee
-				adams.flow.transformer.SpreadSheetSetCell
-					-no-copy
-					true
-					-row
-					last
-					-col
-					last
-					-value
-					@{class}
-			-tee
-				adams.flow.sink.SpreadSheetFileWriter
-					-output
-					@{output_csv}
-					-writer
-						adams.data.io.output.CsvSpreadSheetWriter
-							-missing
 							?
-							-output-comments
-							false
-							-appending
+					-tee
+						adams.flow.control.ConditionalTee
+							-name
+							happy
+							-tee
+								adams.flow.transformer.SetVariable
+									-var-name
+									class
+									-var-value
+									happy
+							-condition
+								adams.flow.condition.bool.TwitterFilterExpression
+									-expression
+									text:"😊" or text:"😂"
+					-tee
+						adams.flow.control.ConditionalTee
+							-name
+							sad
+							-tee
+								adams.flow.transformer.SetVariable
+									-var-name
+									class
+									-var-value
+									sad
+							-condition
+								adams.flow.condition.bool.TwitterFilterExpression
+									-expression
+									text:"😫" or text:"😭"
+					-tee
+						adams.flow.transformer.TwitterConverter
+							-converter
+								adams.data.twitter.SpreadSheetConverter
+									-spreadsheet-type
+										adams.data.spreadsheet.SpreadSheet
+					-tee
+						adams.flow.transformer.SpreadSheetInsertColumn
+							-after
 							true
-							-quote-char
-							'
-							-escape-special-chars
+							-header
+							Mood
+					-tee
+						adams.flow.transformer.SpreadSheetSetCell
+							-no-copy
 							true
+							-row
+							last
+							-col
+							last
+							-value
+							@{class}
+					-tee
+						adams.flow.sink.SpreadSheetFileWriter
+							-output
+							@{output_csv}
+							-writer
+								adams.data.io.output.CsvSpreadSheetWriter
+									-missing
+									?
+									-output-comments
+									false
+									-appending
+									true
+									-quote-char
+									'
+									-escape-special-chars
+									true
 	-actor
 		adams.flow.control.Trigger
 			-name

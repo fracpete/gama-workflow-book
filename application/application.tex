@@ -102,7 +102,7 @@ Once you have collected a sufficiently large archive of tweets, you can start ex
 \subsection{Basic replay and filtering}
 
 \heading{Task}
-Replay tweets from an archive and filter out only ``happy'' and ``sad'' tweets.
+Replay tweets from an archive and filter out everything apart from ``happy'' and ``sad'' tweets.
 
 \heading{Solution}
 Figure \ref{replay_and_filter_tweets-flow} shows a flow that performs some basic filtering of replayed tweets:
@@ -217,7 +217,7 @@ Twitter enables users to attach their geolocation\footnote{WikiPedia on geolocat
 The spreadsheet data structure in ADAMS allows you not only to represent primitives such as boolean, long, double, string and various date types, you can also store arbitrary objects. These objects get converted to and from strings using handlers that are registered for specific object types. GPS coordinates conversion is one application of this generic functionality. Displaying geolocation data therefore first converts the GPS coordinates obtained from the tweets into GPS objects before generating special map objects to be displayed on the map itself.
 
 \heading{Task}
-Display tweets on a map of the world using their geolocation information.
+Display tweets with geolocation information on a map of the world.
 
 \heading{Solution}
 The flow for displaying the geolocation tweets is relatively simple:
@@ -276,10 +276,30 @@ So far we have covered how to collect tweet data and perform some visualizations
 Before we can evaluate data mining algorithms on our collected data, we need to convert it into a format that Weka can handle. The simplest approach is to create a combined CSV file in the specific format that Weka is able to load\footnote{Weka escapes quotes with a backslash rather than doubling them up as most office packages do. It also turns tabs, new lines, carriage returns into \textbackslash t, \textbackslash n and \textbackslash r respectively.}.
 
 \heading{Task}
-Combine all data archives into single dataset that Weka can read.
+Combine multiple data archives into single dataset that Weka can read.
 
 \heading{Solution}
-TODO
+With Weka we have the choice of either creating a CSV file that can be read by Weka's CSVLoader or creating a native ARFF file. The CSV file approach as the advantage that we can always ``append'' more data to it. Using an ARFF file, on the other hand, is more efficient in regards to I/O. In the following we will describe two flows that cover both scenarios.
+The first flow, depicted in Figure \ref{csv_archive_to_weka_csv-flow}, copies all the content of a all the CSV archive files that the user choses into a single Weka CSV file:
+\begin{itemize}
+  \item The \icon{SetVariable-Standalone}~SetVariable standalone defines the file name for the combined CSV file. It gets stored in the user's temporary directory, under the name \texttt{combined.csv}.
+
+  \item Inside the \icon{Trigger}~Trigger ``convert csv'' the CSV conversion takes place:
+  \begin{itemize}
+    \item With the \icon{SelectFile}~SelectFile source, we limit the user to selecting CSV files. All of the selected files will get combined. The current file name gets stored with the \icon{SetVariable}~SetVariable actor in \texttt{@\{input}\}.
+    
+    \item Below the \icon{Trigger}~Trigger ``convert'' we convert the CSV archives into the Weka format:
+    \begin{itemize}
+      \item We attach the variable \texttt{@\{input}\} to the ``archive'' parameter inside the \icon{TweetReplay}~TweetReplay source.
+      
+      \item With \icon{TwitterConverter}~TwitterConverter with once again turn the tweet object into a spreadsheet representation.
+      
+      \item The \icon{SpreadSheetFileWriter}~SpreadSheetFileWriter sink then appends the spreadsheet row generated from the tweet in a Weka-compatible CSV format.
+    \end{itemize}
+  \end{itemize}
+
+  \item The \icon{Trigger}~Trigger ``output csv filename'' merely outputs the absolute file name of the CSV file that was generated.
+\end{itemize}
 
 \begin{figure}[htb]
   \centering
@@ -287,6 +307,40 @@ TODO
   \caption{Turning tweets archives into single Weka CSV file.}
   \label{csv_archive_to_weka_csv-flow}
 \end{figure}
+
+The second flow, depicted in Figure \ref{csv_archive_to_arff-flow}, creates a single Weka ARFF file from all the CSV archive files that the user choses, ready for text mining. Furthermore, it filters out all tweets that are neither ``happy'' nor ``sad'' and creates a dataset with two attributes, one with the text of the tweet and a class attribute with the labels, ``happy'' or ``sad'':
+\begin{itemize}
+  \item In addition to the CSV output variable, the \icon{SetVariable-Standalone}~SetVariable standalone defines the file name for the final ARFF file. It gets stored in the user's temporary directory, under the name \texttt{combined.arff}.
+
+  \item The \icon{Trigger}~Trigger ``convert csv'' the CSV conversion takes place, similar to the one in the previous flow (Figure \ref{csv_archive_to_weka_csv-flow}). However, between the \icon{TweetReplay}~TweetReplay source and the \icon{SpreadSheetFileWriter}~SpreadSheetFileWriter sink, additional filtering and a different conversion takes place:
+  \begin{itemize}
+    \item The \icon{TwitterFilter}~TwitterFilter only lets ``happy'' and ``sad'' tweets through.
+    
+    \item We initialize the variable \texttt{@\{class\}} with a missing value ``?'', using the \icon{SetVariable}~SetVariable actor.
+    
+    \item The \icon{ConditionalTee}~ConditionalTee actors, ``happy'' and ``sad'' set the variable \texttt{@\{class\}} accordingly, with either ``happy'' or ``sad''.
+    
+    \item Since we only want to mine the status text of tweets, the \icon{TwitterConverter}~TwitterConverter only turns the \texttt{TEXT} field into a spreadsheet object, i.e., one with only a single column.
+    
+    \item Now we need to introduce a new column for the class attribute, using the \icon{SpreadSheetInsertColumn}~SpreadSheetInsertColumn transformer.
+    
+    \item With the \icon{SpreadSheetSetCell}~SpreadSheetSetCell actor we set the class label using the value stored in the variable \texttt{@\{class\}}, before writing it to disk using the \icon{SpreadSheetFileWriter}~SpreadSheetFileWriter.
+  \end{itemize}
+  
+  \item Inside the \icon{Trigger}~Trigger ``convert to arff'', we load the CSV file and turn it into an ARFF file, as the name suggests:
+  \begin{itemize}
+    \item The \icon{FileSupplier}~FileSupplier source outputs the file name stored in the variable \texttt{@\{output\_csv\}}.
+    
+    \item With the \icon{WekaFileReader}~WekaFileReader, configured to use a specific CSVLoader setup, we turn the CSV file into a Weka dataset.
+    
+    \item We then push the dataset through the \icon{WekaFilter}~WekaFilter transformer, to turn the class attribute from type \texttt{STRING} to \texttt{NOMINAL}.
+    
+    \item Finally, we save the dataset under the file name stored in \texttt{@\{output\_arff\}}, using the \icon{WekaFileWriter} sink.
+  \end{itemize}
+  
+  \item The \icon{Trigger}~Trigger ``output arff filename'' merely displays the full file name of the generated Weka dataset, like in the previous flow.
+\end{itemize}
+
 
 \begin{figure}[htb]
   \centering
