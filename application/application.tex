@@ -15,19 +15,19 @@
 
 %opening
 \title{ADAMS - Scientific Workflow Management}
-\author{Peter Reutemann}
+\author{Peter Reutemann and Geoff Holmes}
 
 \begin{document}
 
-\chapter{Twitter Research}
+\chapter{Case study: Twitter}
 
-ADAMS\cite{adams} offers a large amount of actors for a wide range of data processing and data mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets, use geolocation information and perform some basic text mining.
+ADAMS\cite{adams} offers a large number of actors for a wide range of data processing and data mining tasks. However, we limit ourselves here to the analysis of data obtained from Twitter. The following sections cover how to set up ADAMS in order to access Twitter, how to collect tweets for further (and repeated) analysis, replay previously collected tweets, visualize tweets, use geolocation information and perform basic text mining.
 
 %%%%%%%%%%%%%%%%%
 % Twitter setup %
 %%%%%%%%%%%%%%%%%
 \section{Twitter setup}
-ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for accessing Twitter. In order to gain access to the Twitter API, you need to have a developer account and register an application to get the required API key/secret and Access token/secret. You can register an application on the Twitter Developer website\footnote{\url{https://dev.twitter.com/}{}} for free. Figure \ref{twitter_dev} shows an example for an ADAMS application, complete with generated API key/secret and Access token/secret. Once you have obtained these keys/tokens/secrets you can enter them in the ADAMS preferences page for Twitter, as shown in Figure \ref{twitter_preferences}. These preferences are global and get picked up by the \icon{TwitterConnection}~TwitterConnection actor as default values, which you can always override, in case you need different credentials.
+ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for accessing Twitter. In order to gain access to the Twitter API, you need to have a developer account and register an application to get the required API key/secret and Access token/secret. You can register an application on the Twitter Developer website\footnote{\url{https://dev.twitter.com/}{}} for free. Figure \ref{twitter_dev} shows an example for an ADAMS application, complete with generated API key/secret and Access token/secret. Once you have obtained these you can enter them in the ADAMS preferences page for Twitter, as shown in Figure \ref{twitter_preferences}. These preferences are global and get picked up by the \icon{TwitterConnection}~TwitterConnection actor as default values, which you can always override, in case you need different credentials.
 
 \begin{figure}[htb]
   \centering
@@ -49,7 +49,7 @@ ADAMS uses the twitter4j\footnote{\url{http://twitter4j.org/}{}} library for acc
 \clearpage
 \newpage
 \section{Collecting tweets}
-Rather than just obtaining the tweets of a single user, Twitter allows you to tap into the stream of tweets as they are posted in real-time using their streaming API\footnote{\url{https://dev.twitter.com/docs/streaming-apis}{}}. However, Twitter distinguishes between the ``fire hose'' and the ``garden hose''. The former being the complete stream of tweets, which is only accessible to paying customers that have sufficient bandwidth and hardware to cope with the flood of information. The latter is a 1\% sample of the complete stream, which is available to the public. The ``garden hose'' can be accessed using ADAMS.
+Rather than just obtaining the tweets of a single user, Twitter allows you to tap into the stream of tweets as they are posted in real-time using their streaming API\footnote{\url{https://dev.twitter.com/docs/streaming-apis}{}}. However, Twitter distinguishes between a ``fire hose'' and a ``garden hose''. The former being the complete stream of tweets, which is only accessible to paying customers that have sufficient bandwidth and hardware to cope with the flood of information. The latter is a 1\% sample of the complete stream, which is available to the public. The ``garden hose'' can be accessed using ADAMS.
 
 According to Twitter's API Rules, you can collect tweets, but you are not allowed to redistribute them.\footnote{See \url{https://twitter.com/apirules}{} for more details.} ADAMS therefore fills the void of publicly available tweet archives, by allowing you to collect a large corpus of tweets yourself. You simply set up a flow for collecting tweets and let it run for a number of days, weeks or even months.
 
@@ -57,13 +57,13 @@ According to Twitter's API Rules, you can collect tweets, but you are not allowe
 Collect tweets for future research purposes due to lack of public tweet archives.
 
 \heading{Solution}
-In order to collect tweets, you basically only need the following three actors:
+In order to collect tweets, you need the following three actors:
 \begin{itemize}
   \item \icon{TwitterConnection}~\textbf{TwitterConnection} -- for connecting to Twitter.
   \item \icon{TwitterListener}~\textbf{TwitterListener} -- for accessing the stream of tweets.
   \item \icon{TwitterConverter}~\textbf{TwitterConverter} -- for turning the tweets into a data format suitable for future analysis, e.g., spreadsheet format.
 \end{itemize}
-Unless you are storing the data in a database, the generated tweet archive file will get rather large, due to several million tweets coming through the ``garden hose'' every single day. The flow depicted in Figure \ref{collect_tweets-flow} saves the tweets in a special ADAMS CSV (comma-separated values) file format, which is also the recommended format for replaying the tweets. In order to avoid too large an output file, the tweets get grouped by day. 
+Unless you are storing the data in a database, the generated tweet archive file will get rather large, due to several million tweets coming through the ``garden hose'' every single day. The flow depicted in Figure \ref{collect_tweets-flow} saves the tweets in a fixed-format ADAMS CSV (comma-separated values) file format, which is also the recommended format for replaying the tweets. In order to avoid too large an output file, the tweets are grouped by day. 
 
 The flow works as follows:
 \begin{itemize}
